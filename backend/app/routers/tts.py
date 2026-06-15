@@ -41,15 +41,26 @@ def generate_audio(payload: GenerateRequest, session: Session = Depends(get_sess
     mp3_path = OUTPUTS_DIR / mp3_filename
 
     # NOTE: TTSService.generate_wav is CPU-bound/blocking.
-    # FastAPI runs sync endpoints in a thread pool automatically,
-    # so this is safe — it won't block the event loop.
-    TTSService.generate_wav(
-        text=text,
-        output_path=wav_path,
-        audio_prompt_path=audio_prompt_path,
-        exaggeration=payload.exaggeration,
-        cfg_weight=payload.cfg_weight,
-    )
+    # We run it in a separate thread pool with a timeout to avoid hanging,
+    # keeping this handler sync so database operations don't block the main event loop.
+    import concurrent.futures
+    import functools
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(
+            functools.partial(
+                TTSService.generate_wav,
+                text=text,
+                output_path=wav_path,
+                audio_prompt_path=audio_prompt_path,
+                exaggeration=payload.exaggeration,
+                cfg_weight=payload.cfg_weight,
+            )
+        )
+        try:
+            future.result(timeout=300)  # 5 minutes max
+        except concurrent.futures.TimeoutError:
+            raise HTTPException(status_code=504, detail="TTS generation timed out")
 
     wav_url = f"/audio/{wav_filename}"
     mp3_url = None

@@ -19,7 +19,7 @@ export default function GeneratorForm() {
   const [error, setError] = useState<string | null>(null);
 
   const charCount = text.length;
-  const maxChars = 5000;
+  const maxChars = 1000;
 
   const handleGenerate = async () => {
     if (!text.trim()) return;
