@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Entorno
+.env
+*.env.local
+
+# Node
+node_modules/
+.next/
+out/
+.npm
+
+# Storage (no subir audios ni voces al repo)
+backend/storage/voices/*.wav
+backend/storage/outputs/*.wav
+backend/storage/outputs/*.mp3
+
+# Base de datos local
+*.db
+*.sqlite
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log

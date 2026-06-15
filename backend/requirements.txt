@@ -1,0 +1,23 @@
+# Web framework
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+
+# TTS Engine
+chatterbox-tts
+
+# Audio processing
+torchaudio
+pydub==0.25.1
+
+# Database
+sqlmodel==0.0.21
+aiosqlite==0.20.0
+
+# Utils
+python-multipart==0.0.12
+python-dotenv==1.0.1
+aiofiles==23.2.1
+
+# Type hints
+pydantic==2.8.2
+pydantic-settings==2.4.0
