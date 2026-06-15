@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: storytelling-backend
+    restart: unless-stopped
+    environment:
+      - APP_NAME=Storytelling API
+      - APP_ENV=production
+      - DEBUG=false
+      - BACKEND_PORT=8000
+      - TTS_DEVICE=${TTS_DEVICE:-cpu}
+      - DEFAULT_EXAGGERATION=${DEFAULT_EXAGGERATION:-0.5}
+      - DEFAULT_CFG_WEIGHT=${DEFAULT_CFG_WEIGHT:-0.5}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000}
+    volumes:
+      - storytelling_voices:/app/storage/voices
+      - storytelling_outputs:/app/storage/outputs
+      - storytelling_db:/app/db
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - storytelling-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    container_name: storytelling-frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - storytelling-net
+
+volumes:
+  storytelling_voices:
+  storytelling_outputs:
+  storytelling_db:
+
+networks:
+  storytelling-net:
+    driver: bridge

@@ -5,7 +5,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 STORAGE_DIR = BASE_DIR / "storage"
 VOICES_DIR = STORAGE_DIR / "voices"
 OUTPUTS_DIR = STORAGE_DIR / "outputs"
-DB_PATH = BASE_DIR / "storytelling.db"  # nombre correcto del proyecto
+import os
+
+_in_docker = os.path.exists("/.dockerenv")
+DB_PATH = Path("/app/db/storytelling.db") if _in_docker else BASE_DIR / "storytelling.db"
 
 
 class Settings(BaseSettings):

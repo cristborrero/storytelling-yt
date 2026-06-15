@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: storytelling-backend-dev
+    restart: unless-stopped
+    environment:
+      - APP_NAME=Storytelling API
+      - APP_ENV=development
+      - DEBUG=true
+      - BACKEND_PORT=8000
+      - TTS_DEVICE=cpu
+      - DEFAULT_EXAGGERATION=0.5
+      - DEFAULT_CFG_WEIGHT=0.5
+      - ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/storage:/app/storage
+      - storytelling_db_dev:/app/db
+    ports:
+      - "8000:8000"
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    networks:
+      - storytelling-dev-net
+
+  frontend:
+    image: node:20-alpine
+    container_name: storytelling-frontend-dev
+    working_dir: /app
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install && npm run dev"
+    networks:
+      - storytelling-dev-net
+
+volumes:
+  storytelling_db_dev:
+
+networks:
+  storytelling-dev-net:
+    driver: bridge
