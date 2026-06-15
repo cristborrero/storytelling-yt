@@ -11,7 +11,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 COPY storage ./storage
-COPY .env ./.env
 
 RUN mkdir -p /app/db /app/storage/voices /app/storage/outputs
 
