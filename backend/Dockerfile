@@ -3,11 +3,12 @@ FROM python:3.11-slim
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg git curl \
+    ffmpeg git curl build-essential python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir numpy wheel cython
+RUN pip install --no-cache-dir --no-build-isolation -r requirements.txt
 
 COPY app ./app
 
