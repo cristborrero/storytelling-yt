@@ -20,8 +20,6 @@ services:
       - storytelling_voices:/app/storage/voices
       - storytelling_outputs:/app/storage/outputs
       - storytelling_db:/app/db
-    ports:
-      - "8000:8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -42,8 +40,6 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
-    ports:
-      - "3000:3000"
     depends_on:
       backend:
         condition: service_healthy
