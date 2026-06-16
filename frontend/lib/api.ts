@@ -1,7 +1,7 @@
 import axios from "axios";
 import type { GenerateRequest, GenerateResponse, Generation, Voice } from "./types";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const BASE = typeof window !== "undefined" ? "/api" : (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000");
 
 const api = axios.create({ baseURL: BASE });
 
