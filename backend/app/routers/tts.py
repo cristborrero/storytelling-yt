@@ -58,7 +58,7 @@ def generate_audio(payload: GenerateRequest, session: Session = Depends(get_sess
             )
         )
         try:
-            future.result(timeout=300)  # 5 minutes max
+            future.result(timeout=1200)  # 20 minutes max
         except concurrent.futures.TimeoutError:
             raise HTTPException(status_code=504, detail="TTS generation timed out")
 
