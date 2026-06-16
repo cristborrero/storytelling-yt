@@ -14,6 +14,7 @@ class Voice(SQLModel, table=True):
     stored_filename: str
     file_path: str
     duration_seconds: Optional[float] = None
+    transcript: Optional[str] = Field(default=None)
     created_at: datetime = Field(default_factory=utcnow)
 
 

@@ -53,6 +53,7 @@ def generate_audio(payload: GenerateRequest, session: Session = Depends(get_sess
                 text=text,
                 output_path=wav_path,
                 audio_prompt_path=audio_prompt_path,
+                prompt_text=selected_voice.transcript if selected_voice else None,
                 exaggeration=payload.exaggeration,
                 cfg_weight=payload.cfg_weight,
             )

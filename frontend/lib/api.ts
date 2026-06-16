@@ -30,11 +30,12 @@ export async function getVoices(): Promise<Voice[]> {
   return res.data.items;
 }
 
-export async function uploadVoice(file: File, name?: string): Promise<Voice> {
+export async function uploadVoice(file: File, name?: string, transcript?: string): Promise<Voice> {
   await ensureInitialized();
   const form = new FormData();
   form.append("file", file);
   if (name) form.append("name", name);
+  if (transcript) form.append("transcript", transcript);
   const res = await api.post("/voices/upload", form);
   return res.data.item;
 }

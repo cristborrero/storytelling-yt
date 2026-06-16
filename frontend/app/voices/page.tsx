@@ -1,41 +1,69 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getVoices, uploadVoice } from "@/lib/api";
 import type { Voice } from "@/lib/types";
-import { Mic2, Upload } from "lucide-react";
+import { Mic2, Upload, X, FileAudio, FileText } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
-import { useRef } from "react";
 
 export default function VoicesPage() {
   const [voices, setVoices] = useState<Voice[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [voiceName, setVoiceName] = useState("");
+  const [transcript, setTranscript] = useState("");
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => setVoices(await getVoices());
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setSelectedFile(file);
+    setVoiceName(file.name.replace(".wav", ""));
+    setTranscript("");
+    setShowModal(true);
+  };
+
+  const handleUploadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedFile) return;
+
     setUploading(true);
     try {
-      await uploadVoice(file, file.name.replace(".wav", ""));
+      await uploadVoice(selectedFile, voiceName, transcript);
       await load();
+      closeModal();
+    } catch (err) {
+      console.error("Failed to upload voice:", err);
     } finally {
       setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
     }
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedFile(null);
+    setVoiceName("");
+    setTranscript("");
+    if (inputRef.current) inputRef.current.value = "";
   };
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-white">Voice Library</h1>
-          <p className="text-sm text-neutral-400 mt-1">
-            Upload 10–15s WAV clips to use as voice references
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">
+            Voice <span className="text-brand">Library</span>
+          </h1>
+          <p className="text-sm text-neutral-400 mt-1.5 max-w-md">
+            Upload 10–15s reference WAV clips and provide their transcripts for high-quality voice cloning with Fish Speech.
           </p>
         </div>
         <div>
@@ -44,48 +72,165 @@ export default function VoicesPage() {
             type="file"
             accept=".wav"
             className="hidden"
-            onChange={handleUpload}
+            onChange={handleFileSelect}
           />
           <Button
-            loading={uploading}
             onClick={() => inputRef.current?.click()}
-            className="gap-2"
+            className="gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand to-orange-500 hover:from-orange-500 hover:to-brand shadow-lg transition-all duration-300"
           >
-            <Upload size={16} /> Upload Voice
+            <Upload size={16} /> Upload reference clip
           </Button>
         </div>
       </div>
 
       {voices.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-3 border border-dashed border-surface-border rounded-2xl text-neutral-500">
-          <Mic2 size={32} />
-          <p>No voices yet. Upload a .wav clip to get started.</p>
+        <div className="flex flex-col items-center justify-center py-24 gap-4 border border-dashed border-surface-border rounded-3xl text-neutral-500 glass-panel">
+          <div className="w-16 h-16 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400">
+            <Mic2 size={28} />
+          </div>
+          <div className="text-center">
+            <p className="text-base font-semibold text-neutral-300">No reference voices uploaded yet</p>
+            <p className="text-xs text-neutral-500 mt-1">Select a .wav file from your machine to get started.</p>
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {voices.map((v) => (
             <div
               key={v.id}
-              className="bg-surface-card border border-surface-border rounded-2xl p-5 flex flex-col gap-3"
+              className="glass-panel glow-card rounded-2xl p-6 flex flex-col justify-between gap-5 relative overflow-hidden group"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-orange-950/50 border border-brand/30 flex items-center justify-center text-brand">
-                  <Mic2 size={16} />
+              {/* Card Header */}
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-orange-950/40 border border-brand/20 flex items-center justify-center text-brand shrink-0">
+                  <Mic2 size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{v.name}</p>
-                  <p className="text-xs text-neutral-500 truncate">{v.original_filename}</p>
+                  <h3 className="text-base font-bold text-white truncate group-hover:text-brand transition-colors">
+                    {v.name}
+                  </h3>
+                  <p className="text-xs text-neutral-500 truncate mt-0.5">{v.original_filename}</p>
                 </div>
               </div>
-              <div className="flex gap-2">
-                {v.duration_seconds && <Badge>{v.duration_seconds.toFixed(1)}s</Badge>}
-                <Badge>WAV</Badge>
+
+              {/* Transcript Preview */}
+              {v.transcript ? (
+                <div className="bg-black/30 border border-white/5 rounded-xl p-3 text-xs text-neutral-400 min-h-12 max-h-24 overflow-y-auto font-sans leading-relaxed">
+                  <span className="font-semibold text-neutral-500 block mb-0.5">TRANSCRIPT:</span>
+                  &quot;{v.transcript}&quot;
+                </div>
+              ) : (
+                <div className="bg-black/10 border border-dashed border-white/5 rounded-xl p-3 text-xs text-neutral-600 italic">
+                  No reference transcript provided.
+                </div>
+              )}
+
+              {/* Card Footer */}
+              <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-1">
+                <div className="flex gap-2">
+                  {v.duration_seconds && (
+                    <Badge className="bg-white/5 border border-white/10 text-neutral-300">
+                      {v.duration_seconds.toFixed(1)}s
+                    </Badge>
+                  )}
+                  <Badge className="bg-brand/10 border border-brand/20 text-brand">WAV</Badge>
+                </div>
+                <span className="text-[10px] text-neutral-600 font-mono">
+                  {new Date(v.created_at).toLocaleDateString()}
+                </span>
               </div>
-              <p className="text-xs text-neutral-600">
-                {new Date(v.created_at).toLocaleDateString()}
-              </p>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal - Upload Voice Reference */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-lg glass-panel rounded-3xl overflow-hidden shadow-2xl border border-white/10 flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-brand/10 border border-brand/20 flex items-center justify-center text-brand">
+                  <Mic2 size={16} />
+                </div>
+                <span className="font-bold text-white text-base">Add Voice Reference</span>
+              </div>
+              <button
+                onClick={closeModal}
+                className="text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUploadSubmit} className="p-6 flex flex-col gap-5">
+              {/* File Info Box */}
+              {selectedFile && (
+                <div className="flex items-center gap-3 bg-brand/5 border border-brand/10 rounded-2xl p-4 text-sm text-neutral-300">
+                  <FileAudio className="text-brand shrink-0" size={24} />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-white truncate">{selectedFile.name}</p>
+                    <p className="text-xs text-neutral-500 mt-0.5">
+                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB · WAV format
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Speaker Name Input */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="voice-name" className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+                  Speaker / Voice Name
+                </label>
+                <input
+                  id="voice-name"
+                  type="text"
+                  required
+                  placeholder="e.g., Antony - Audiobook Reader"
+                  value={voiceName}
+                  onChange={(e) => setVoiceName(e.target.value)}
+                  className="w-full bg-neutral-950 border border-white/10 focus:border-brand focus:ring-1 focus:ring-brand/50 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none transition-all duration-200"
+                />
+              </div>
+
+              {/* Transcript Textarea */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex justify-between items-center">
+                  <label htmlFor="voice-transcript" className="text-xs font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-1">
+                    <FileText size={12} /> Reference Transcript (Recommended)
+                  </label>
+                  <span className="text-[10px] text-brand/80 font-medium">Improves cloning accuracy</span>
+                </div>
+                <textarea
+                  id="voice-transcript"
+                  rows={4}
+                  placeholder="Type or paste the exact words spoken in the 10-15s WAV clip..."
+                  value={transcript}
+                  onChange={(e) => setTranscript(e.target.value)}
+                  className="w-full bg-neutral-950 border border-white/10 focus:border-brand focus:ring-1 focus:ring-brand/50 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none resize-none transition-all duration-200"
+                />
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex gap-3 mt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={closeModal}
+                  className="flex-1 py-3 border border-white/10 hover:bg-white/5 rounded-xl text-neutral-300 font-medium transition-colors"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  loading={uploading}
+                  className="flex-1 py-3 rounded-xl bg-brand hover:bg-brand-dark text-white font-semibold shadow-lg shadow-orange-950/20 transition-all duration-200"
+                >
+                  Create Voice
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

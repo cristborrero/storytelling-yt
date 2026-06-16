@@ -21,6 +21,7 @@ def list_voices(session: Session = Depends(get_session)):
 async def upload_voice(
     file: UploadFile = File(...),
     name: str | None = None,
+    transcript: str | None = None,
     session: Session = Depends(get_session),
 ):
     ext = Path(file.filename or "").suffix.lower()
@@ -38,6 +39,7 @@ async def upload_voice(
         stored_filename=stored_filename,
         file_path=str(destination),
         duration_seconds=duration,
+        transcript=transcript,
     )
     session.add(voice)
     session.commit()
