@@ -4,16 +4,19 @@ import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
   title: "Storytelling — Self-hosted TTS",
-  description: "Generate professional English narration with Chatterbox-Turbo",
+  description: "Generate professional English narration with Chatterbox TTS",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen bg-surface text-neutral-100">
+      <body className="h-screen w-screen overflow-hidden bg-[#0a0a0c] text-neutral-100 flex font-sans">
         <Navbar />
-        <main className="max-w-5xl mx-auto px-4 py-8">{children}</main>
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+          {children}
+        </div>
       </body>
     </html>
   );
 }
+

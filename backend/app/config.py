@@ -21,7 +21,6 @@ class Settings(BaseSettings):
     default_exaggeration: float = 0.5
     default_cfg_weight: float = 0.5
     allowed_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
-    fish_speech_api_url: str = "http://localhost:8080"
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
