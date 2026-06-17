@@ -37,9 +37,15 @@ from fastapi import Request
 async def global_exception_handler(request: Request, exc: Exception):
     print(f"Unhandled exception: {exc}")
     traceback.print_exc()
+    origin = request.headers.get("origin")
+    headers = {}
+    if origin:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
     return JSONResponse(
         status_code=500,
         content={"detail": f"Internal Server Error: {str(exc)}"},
+        headers=headers,
     )
 
 app.include_router(voices.router)

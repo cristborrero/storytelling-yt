@@ -40,28 +40,16 @@ def generate_audio(payload: GenerateRequest, session: Session = Depends(get_sess
     wav_path = OUTPUTS_DIR / wav_filename
     mp3_path = OUTPUTS_DIR / mp3_filename
 
-    # NOTE: TTSService.generate_wav is CPU-bound/blocking.
-    # We run it in a separate thread pool with a timeout to avoid hanging,
-    # keeping this handler sync so database operations don't block the main event loop.
-    import concurrent.futures
-    import functools
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(
-            functools.partial(
-                TTSService.generate_wav,
-                text=text,
-                output_path=wav_path,
-                audio_prompt_path=audio_prompt_path,
-                prompt_text=selected_voice.transcript if selected_voice else None,
-                exaggeration=payload.exaggeration,
-                cfg_weight=payload.cfg_weight,
-            )
+    try:
+        TTSService.generate_wav(
+            text=text,
+            output_path=wav_path,
+            audio_prompt_path=audio_prompt_path,
+            exaggeration=payload.exaggeration,
+            cfg_weight=payload.cfg_weight,
         )
-        try:
-            future.result(timeout=1200)  # 20 minutes max
-        except concurrent.futures.TimeoutError:
-            raise HTTPException(status_code=504, detail="TTS generation timed out")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"TTS generation error: {e}")
 
     wav_url = f"/audio/{wav_filename}"
     mp3_url = None
