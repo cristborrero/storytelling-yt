@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getHistory, audioUrl } from "@/lib/api";
+import { getHistory, audioUrl, deleteHistoryItem } from "@/lib/api";
 import type { Generation } from "@/lib/types";
 import AudioPlayer from "./ui/AudioPlayer";
 import Badge from "./ui/Badge";
-import { History, Calendar, Settings2 } from "lucide-react";
+import { History, Calendar, Settings2, Trash2 } from "lucide-react";
 
 export default function HistoryList() {
   const [items, setItems] = useState<Generation[]>([]);
@@ -16,6 +16,15 @@ export default function HistoryList() {
       setLoading(false);
     });
   }, []);
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteHistoryItem(id);
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    } catch (err) {
+      console.error("Failed to delete item:", err);
+    }
+  };
 
   if (loading) {
     return (
@@ -63,6 +72,13 @@ export default function HistoryList() {
                   {item.duration_seconds.toFixed(1)}s
                 </Badge>
               )}
+              <button
+                onClick={() => item.id && handleDelete(item.id)}
+                className="text-neutral-500 hover:text-red-400 p-1 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                title="Delete generation"
+              >
+                <Trash2 size={13} />
+              </button>
             </div>
           </div>
 

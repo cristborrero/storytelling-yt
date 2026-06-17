@@ -52,6 +52,11 @@ export async function getHistory(limit = 50): Promise<Generation[]> {
   return res.data.items;
 }
 
+export async function deleteHistoryItem(id: number): Promise<void> {
+  await ensureInitialized();
+  await api.delete(`/history/${id}`);
+}
+
 export function audioUrl(path: string): string {
   const base = typeof window !== "undefined" ? api.defaults.baseURL : BASE;
   return `${base}${path}`;
